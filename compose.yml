@@ -1,0 +1,15 @@
+services:
+  devdb:
+    image: bitnami/postgresql
+    container_name: ledger_db
+    ports:
+      - "5442:5432"
+    environment:
+      - POSTGRESQL_USERNAME=${POSTGRESQL_USERNAME}
+      - POSTGRESQL_PASSWORD=${POSTGRESQL_PASSWORD}
+      - POSTGRESQL_DATABASE=${POSTGRESQL_DATABASE}
+    volumes:
+      - ledger_volume:/bitnami/postgresql
+    restart: always
+volumes:
+  ledger_volume:
