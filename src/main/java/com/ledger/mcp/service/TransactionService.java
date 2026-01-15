@@ -1,96 +1,77 @@
 package com.ledger.mcp.service;
 
 import com.ledger.mcp.model.Transaction;
+import com.ledger.mcp.repository.TransactionRepository;
+import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class TransactionService {
 
-    // Simple in-memory store for demo (can replace with JPA repository)
-    private final Map<Long, Transaction> store = new ConcurrentHashMap<>();
-    private long idCounter = 1;
+    private final TransactionRepository repository;
 
-    /**
-     * Create a new transaction.
-     * @param description Description of the transaction
-     * @param amount Amount of the transaction
-     * @param category Category name
-     * @param transactionDate Date of transaction
-     * @return The created transaction
-     */
-    public Transaction createTransaction(String description,
-                                         BigDecimal amount,
-                                         String category,
-                                         LocalDateTime transactionDate) {
-        Transaction tx = new Transaction();
-        tx.setId(idCounter++);
-        tx.setDescription(description);
-        tx.setAmount(amount);
-        tx.setCategory(category);
-        tx.setTransactionDate(transactionDate != null ? transactionDate : LocalDateTime.now());
-        tx.setCreatedAt(LocalDateTime.now());
-        tx.setUpdatedAt(LocalDateTime.now());
-
-        store.put(tx.getId(), tx);
-        return tx;
+    public TransactionService(TransactionRepository repository) {
+        this.repository = repository;
     }
 
-    /**
-     * Get a transaction by ID.
-     * @param id Transaction ID
-     * @return Optional transaction
-     */
+    @Tool(description = "Create a new transaction with description, amount, category, and date.")
+    public Transaction createTransaction(String description, BigDecimal amount, String category, LocalDateTime transactionDate) {
+        LocalDateTime now = LocalDateTime.now();
+        Transaction tx = Transaction.builder()
+                .description(description)
+                .amount(amount)
+                .category(category)
+                .transactionDate(transactionDate != null ? transactionDate : now)
+                .build();
+
+        return repository.save(tx);
+    }
+
+    @Tool(description = "Get a transaction by its ID.")
     public Optional<Transaction> getTransaction(Long id) {
-        return Optional.ofNullable(store.get(id));
+        return repository.findById(id);
     }
 
-    /**
-     * List all transactions.
-     * @return List of all transactions
-     */
+    @Tool(description = "List all transactions.")
     public List<Transaction> listTransactions() {
-        return new ArrayList<>(store.values());
+        return repository.findAll();
     }
 
-    /**
-     * Update an existing transaction.
-     * @param id Transaction ID
-     * @param description New description
-     * @param amount New amount
-     * @param category New category
-     * @param transactionDate New transaction date
-     * @return Updated transaction
-     */
-    public Transaction updateTransaction(Long id,
-                                         String description,
-                                         BigDecimal amount,
-                                         String category,
-                                         LocalDateTime transactionDate) {
-        Transaction existing = store.get(id);
-        if (existing == null) {
-            throw new IllegalArgumentException("Transaction not found: " + id);
-        }
+    @Tool(description = "Update an existing transaction by ID with new values.")
+    public Transaction updateTransaction(Long id, String description, BigDecimal amount, String category, LocalDateTime transactionDate) {
+        Transaction existing = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
 
-        if (description != null) existing.setDescription(description);
-        if (amount != null) existing.setAmount(amount);
-        if (category != null) existing.setCategory(category);
-        if (transactionDate != null) existing.setTransactionDate(transactionDate);
+        Transaction updated = existing.toBuilder()
+                .description(description != null ? description : existing.getDescription())
+                .amount(amount != null ? amount : existing.getAmount())
+                .category(category != null ? category : existing.getCategory())
+                .transactionDate(transactionDate != null ? transactionDate : existing.getTransactionDate())
+                .build();
 
-        existing.setUpdatedAt(LocalDateTime.now());
-        store.put(id, existing);
-        return existing;
+        return repository.save(updated);
     }
 
-    /**
-     * Delete a transaction.
-     * @param id Transaction ID
-     * @return true if deleted, false if not found
-     */
+    @Tool(description = "Delete a transaction by ID.")
     public boolean deleteTransaction(Long id) {
-        return store.remove(id) != null;
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    @Tool(description = "Return the total amounts grouped by category.")
+    public Map<String, BigDecimal> getCategoryTotals() {
+        List<Transaction> transactions = repository.findAll();
+        Map<String, BigDecimal> totals = new HashMap<>();
+        for (Transaction t : transactions) {
+            totals.merge(t.getCategory(), t.getAmount(), BigDecimal::add);
+        }
+        return totals;
     }
 }

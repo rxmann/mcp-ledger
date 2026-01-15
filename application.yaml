@@ -1,4 +1,7 @@
 spring:
+  main:
+    banner-mode: off
+    web-application-type: none
   datasource:
     url: jdbc:postgresql://localhost:5442/ledger_db
     username: rxman
@@ -13,17 +16,3 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
-
-  main:
-    web-application-type: none  # IMPORTANT (no web server)
-
-logging:
-  # Turn off all console logging
-  level:
-    root: OFF
-  # Disable default console appender
-  console:
-    enabled: false
-  file:
-    # Optional: write logs to file
-    name: logs/ledger-mcp.log
