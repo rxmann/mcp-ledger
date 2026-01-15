@@ -1,5 +1,0 @@
-/home/rxman/projects/ledger-mcp-app/src/main/java/com/ledger/mcp/LedgerMcpApplication.java
-/home/rxman/projects/ledger-mcp-app/src/main/java/com/ledger/mcp/handler/GlobalExceptionHandler.java
-/home/rxman/projects/ledger-mcp-app/src/main/java/com/ledger/mcp/model/Transaction.java
-/home/rxman/projects/ledger-mcp-app/src/main/java/com/ledger/mcp/repository/TransactionRepository.java
-/home/rxman/projects/ledger-mcp-app/src/main/java/com/ledger/mcp/service/TransactionService.java
